@@ -1,8 +1,7 @@
 import Leap, sys, time, thread, math
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 
-z_gestures_list= []
-z_gesture_counter = 0
+
 
 
 class LeapMotionListener(Leap.Listener):
@@ -88,13 +87,19 @@ class LeapMotionListener(Leap.Listener):
                         print("J \n\n\n\n\n"  + " Progress " + str(circle.progress) + " Radius " + str(circle.radius))
                         time.sleep(2)
 
+                    elif (circle.pointable.direction.angle_to(circle.normal) >= Leap.PI/2 and thumbFinger.direction.x < 0 and indexFinger.direction.x < 0 and middleFinger.direction.x < 0 and
+                        ringFinger.direction.x < 0 and pinkyFinger.direction.x < 0 and thumbFinger.direction.y > 0 and thumbFinger.direction.z < 0 and indexFinger.direction.z > 0.80 and
+                          middleFinger.direction.z > 0.80 and ringFinger.direction.z > 0.80 and pinkyFinger.direction.z > 0.80):
+                        print("10\n\n\n\n\n" + " Progress " + str(circle.progress) + " Radius " + str(circle.radius))
+                        time.sleep(2)
+
                 elif gesture.type == Leap.Gesture.TYPE_SWIPE:
-                    print(z_gesture_counter, len(z_gestures_list))
+
                     swipe = SwipeGesture(gesture)
                     swipeDir = swipe.direction
-                    print("SWWWWWWWWWWWWWWWWWWWWWIPE\n\n\n\n\n")
 
-                    if(swipeDir.x > 0 and thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z > 0 and ringFinger.direction.z > 0 and pinkyFinger.direction.z > 0
+
+                    """if(swipeDir.x > 0 and thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z > 0 and ringFinger.direction.z > 0 and pinkyFinger.direction.z > 0
                     and middleFinger.direction.y < 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y <0 ):
                         global z_gesture_counter
                         global z_gestures_list
@@ -124,9 +129,9 @@ class LeapMotionListener(Leap.Listener):
                                 z_gesture_counter += 1
                             else:
                                 z_gesture_counter = 0
-                                z_gestures_list = []
+                                z_gestures_list = []"""
 
-                    elif (swipeDir.x > 0 and math.fabs(swipeDir.x) > math.fabs(swipeDir.y) and thumbFinger.direction.x < 0 and indexFinger.direction.x < 0
+                    if (swipeDir.x > 0 and math.fabs(swipeDir.x) > math.fabs(swipeDir.y) and thumbFinger.direction.x < 0 and indexFinger.direction.x < 0
                             and thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and indexFinger.direction.z < 0 and
                             middleFinger.direction.z > 0 and ringFinger.direction.z >0 and pinkyFinger.direction.z >0):
                         swipeSide = "Swiped Right"
@@ -146,7 +151,7 @@ class LeapMotionListener(Leap.Listener):
                     and math.fabs(pinkyFinger.direction.z) > math.fabs(pinkyFinger.direction.x) and math.fabs(thumbFinger.direction.y) > math.fabs(middleFinger.direction.x)):
                 print("A\n\n\n\n\n")
 
-            elif(thumbFinger.direction.x > 0 and thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y > 0
+            elif(thumbFinger.direction.x > 0 and indexFinger.direction.x > 0 and middleFinger.direction.x > 0 and thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y > 0
             and pinkyFinger.direction.y > 0 and thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0 and ringFinger.direction.z < 0
             and pinkyFinger.direction.z < 0):
                 print("B\n\n\n\n\n")
@@ -164,7 +169,7 @@ class LeapMotionListener(Leap.Listener):
 
             elif(thumbFinger.direction.x > 0 and middleFinger.direction.x < 0 and ringFinger.direction.x < 0 and pinkyFinger.direction.x < 0 and thumbFinger.direction.y > 0 and
             indexFinger.direction.y > 0.80 and middleFinger.direction.y < 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y < 0):
-                print("D")
+                print("D o 1")
 
             elif(thumbFinger.direction.x > 0 and indexFinger.direction.z <0 and middleFinger.direction.z<0 and ringFinger.direction.z <0 and pinkyFinger.direction.z < 0 and
             thumbFinger.direction.y > 0 and indexFinger.direction.y <0 and middleFinger.direction.y<0 and ringFinger.direction.y<0 and pinkyFinger.direction.y<0):
@@ -237,13 +242,13 @@ class LeapMotionListener(Leap.Listener):
                     thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y < 0 and
                     thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0 and ringFinger.direction.z < 0 and pinkyFinger.direction.z < 0
             and math.fabs(indexFinger.direction.x) < math.fabs(indexFinger.direction.y)):
-                print("V\n\n\n\n\n")
+                print("V o 2\n\n\n\n\n")
 
             elif (thumbFinger.direction.x > 0 and indexFinger.direction.x < 0 and middleFinger.direction.x > 0  and ringFinger.direction.x > 0 and pinkyFinger.direction.x < 0 and
                     thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y > 0 and pinkyFinger.direction.y < 0 and
                     thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0 and ringFinger.direction.z < 0 and pinkyFinger.direction.z < 0
             and math.fabs(indexFinger.direction.x) < math.fabs(indexFinger.direction.y)):
-                print("W\n\n\n\n\n")
+                print("W o 6\n\n\n\n\n")
 
             elif(thumbFinger.direction.x > 0 and middleFinger.direction.x < 0 and ringFinger.direction.x < 0 and pinkyFinger.direction.x < 0 and thumbFinger.direction.y > 0 and
             indexFinger.direction.y > 0 and middleFinger.direction.y < 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y < 0):
@@ -253,6 +258,36 @@ class LeapMotionListener(Leap.Listener):
             thumbFinger.direction.y > 0 and indexFinger.direction.y < 0 and middleFinger.direction.y < 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y > 0 and
             thumbFinger.direction.z < 0 and pinkyFinger.direction.z < 0):
                 print("Y\n\n\n\n\n")
+
+            elif(thumbFinger.direction.x < 0 and indexFinger.direction.x < 0 and middleFinger.direction.x > 0 and ringFinger.direction.x < 0 and pinkyFinger.direction.x < 0 and
+            thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y < 0 and
+            thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0):
+                print("3\n\n\n\n\n")
+
+            elif(thumbFinger.direction.x > 0 and indexFinger.direction.x < 0 and middleFinger.direction.x < 0 and ringFinger.direction.x > 0 and pinkyFinger.direction.x > 0 and
+            thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y > 0 and pinkyFinger.direction.y > 0 and
+            thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0 and ringFinger.direction.z < 0 and pinkyFinger.direction.z < 0):
+                print("4\n\n\n\n\n")
+
+            elif (thumbFinger.direction.x < 0 and indexFinger.direction.x < 0 and middleFinger.direction.x < 0 and ringFinger.direction.x > 0 and pinkyFinger.direction.x > 0 and
+                    thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y > 0 and pinkyFinger.direction.y > 0 and
+                    thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0 and ringFinger.direction.z < 0 and pinkyFinger.direction.z < 0):
+                print("5\n\n\n\n\n")
+
+            elif (thumbFinger.direction.x > 0 and indexFinger.direction.x < 0 and middleFinger.direction.x < 0 and ringFinger.direction.x < 0 and pinkyFinger.direction.x > 0 and
+                    thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y > 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y > 0 and
+                    thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and middleFinger.direction.z < 0 and ringFinger.direction.z < 0 and pinkyFinger.direction.z < 0):
+                print("7\n\n\n\n\n")
+
+            elif (thumbFinger.direction.x > 0 and indexFinger.direction.x < 0 and middleFinger.direction.x < 0 and ringFinger.direction.x > 0 and pinkyFinger.direction.x > 0 and
+                    thumbFinger.direction.y > 0 and indexFinger.direction.y > 0 and middleFinger.direction.y < 0 and ringFinger.direction.y > 0 and pinkyFinger.direction.y > 0 and
+                    thumbFinger.direction.z < 0 and indexFinger.direction.z < 0 and ringFinger.direction.z < 0 and pinkyFinger.direction.z < 0):
+                print("8\n\n\n\n\n")
+
+            elif (thumbFinger.direction.x > 0 and indexFinger.direction.x > 0 and middleFinger.direction.x < 0 and ringFinger.direction.x > 0 and thumbFinger.direction.y > 0
+                    and indexFinger.direction.y < 0 and middleFinger.direction.y > 0 and ringFinger.direction.y > 0 and pinkyFinger.direction.y > 0 and thumbFinger.direction.z < 0 and
+                    indexFinger.direction.z < 0):
+                print("9\n\n\n\n\n")
 
 
 
