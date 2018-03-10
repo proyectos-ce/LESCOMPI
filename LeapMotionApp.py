@@ -1,4 +1,7 @@
-import Leap, sys, time, thread, math
+
+import sys, time, thread, math
+sys.path.insert(0, "/home/jimena/Documents/Leap Motion/Leap.py")
+import Leap
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 
 
