@@ -1,6 +1,7 @@
 import Tkinter as tk
 import Leap
-
+import json
+import paho.mqtt.client as mqtt
 
 from Tkinter import *
 
@@ -11,6 +12,10 @@ class Listener(Leap.Listener):
         Leap.Listener.__init__(self)
         self.listenerEnabled = False
         self.lastFrame = Leap.Frame
+        self.lastFrames = [Leap.Frame, Leap.Frame, Leap.Frame, Leap.Frame, Leap.Frame]
+        self.numberOfFramesAnalyzed = 0
+        self.listOfEightyFrames=[]
+        self.getFrames = False
         print(str(self.listenerEnabled))
 
     def on_init(self, controller):
@@ -25,7 +30,21 @@ class Listener(Leap.Listener):
 
     def on_frame(self, controller):
         #if self.listenerEnabled == True:
+
             self.lastFrame = controller.frame()
+
+            for n in range(79):
+                if(len(self.lastFrames) == 80):
+                    self.lastFrames.pop(0)
+                    self.lastFrames.append(controller.frame(n))
+                else:
+                    self.lastFrames.append(controller.frame(n))
+
+            if (self.getFrames == True and len(self.listOfEightyFrames) != 80):
+                self.listOfEightyFrames.append(controller.frame())
+            else:
+                self.getFrames = False
+
             #print("Lectura del Leap" + str(len(self.lastFrame.hands)))
             #self.write()
             #self.listenerEnabled = False
@@ -54,23 +73,23 @@ class Reader(Tk):
         self.mainFrame = Frame(self, width=800, height=600, bg="black")
         self.mainFrame.place(x=0,y=0)
 
-        self.infoReadTextBox = Text(self, width = 4, height=1, font=("Monospace", 72))
+        self.infoReadTextBox = Text(self, width = 4, height=1, font=("Consolas", 72))
         self.infoReadTextBox.place(x=10, y=300)
         self.infoReadTextBox.insert(END, "HOLA")
         self.infoReadTextBox.config(state=DISABLED)
 
 
-        self.entrySign = Entry(self, font=("Monospace", 32))
+        self.entrySign = Entry(self, font=("Consolas", 32))
         self.entrySign.place(x=5, y=100)
         self.entrySign.bind("<Return>", self.setSignToRead)
 
-        self.labelSignToRead = Label(self, bg="black", fg="Pink", text="Digite el codigo de gesto", font=("Monospace", 32))
+        self.labelSignToRead = Label(self, bg="black", fg="Pink", text="Digite el codigo de gesto", font=("Consolas", 32))
         self.labelSignToRead.place(x=5, y=0)
 
-        self.labelSignRead = Label(self, bg="black", fg="Pink", text="Codigo de gesto leido", font=("Monospace", 32))
+        self.labelSignRead = Label(self, bg="black", fg="Pink", text="Codigo de gesto leido", font=("Consolas", 32))
         self.labelSignRead.place(x=5, y=200)
 
-        self.getFrameButton = Button(self, command = self.getLastFrame, text="Capturar Cuadro", bg="Pink", font=("Monospace", 32))
+        self.getFrameButton = Button(self, command = self.getLastFrame, text="Capturar Cuadro", bg="Pink", font=("Consolas", 32))
         self.getFrameButton.place(x=340, y=500)
 
         self.listener = Listener()
@@ -78,56 +97,94 @@ class Reader(Tk):
         self.listener.set_textBox(self.infoReadTextBox)
 
         self.lastFrameProcessed = Leap.Frame
+        self.frameToCompare = Leap.Frame
+
+        self.gestureToReadCode = 0
 
 
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+
+        self.client = mqtt.Client("leapLesco")
+        self.client.connect("iot.eclipse.org", 1883, 60)
 
 
 
     def setSignToRead(self, event):
         try:
-            print(self.entrySign.get())
+            self.gestureToReadCode = int(self.entrySign.get())
+            self.getLastFrame()
+            print("Gesto a leer: "+self.entrySign.get())
         except Exception as ValueError:
             print(self.entrySign.get(), '\n', 'Error de Entrada')
 
     def getLastFrame(self):
         self.lastFrameProcessed = self.listener.lastFrame
+        self.lastFiveFramesProcessed = self.listener.lastFrames
+        self.listener.getFrames = True
+
+        while(len(self.listener.listOfEightyFrames) != 80):
+            print(len(self.listener.listOfEightyFrames))
+
+        self.getFrameInfo(self.listener.listOfEightyFrames[-1], self.listener.listOfEightyFrames)
+
+        self.listener.listOfEightyFrames = []
+        self.listener.getFrames = False
 
         print("Last Frame Updated")
 
-        self.getFrameInfo(self.lastFrameProcessed)
+        #self.getFrameInfo(self.lastFrameProcessed, self.lastFiveFramesProcessed)
 
 
-    def getFrameInfo(self, frame):
+    def getFrameInfo(self, frame, lastFiveFrames):
         self.handType = ""
-        for hand in frame.hands:
-            if hand.is_right: self.handType = "Right"
+
+        self.frameToCompare = lastFiveFrames[0]
+
+        for n in range(len(frame.hands)):
+            if frame.hands[n].is_right: self.handType = "Right"
             else: self.handType = "Left"
 
             print(str(self.handType))
 
+            print ("Hand Movement: \n" + " Position X LastFrame: "+ str(frame.hands[n].palm_position.x)+
+                   " Position X FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.x)+ " \nDelta X: " +
+                   str(frame.hands[n].palm_position.x - self.frameToCompare.hands[n].palm_position.x) +
+                   " \nPosition Y LastFrame: " + str(frame.hands[n].palm_position.y) + " Position Y FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.y)+
+                   " \nDelta Y: " + str(
+                        frame.hands[n].palm_position.y - self.frameToCompare.hands[n].palm_position.y) +
+                   " \nPosition Z LastFrame: " + str(frame.hands[n].palm_position.z) + " Position Z FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.z)+
+                   " \nDelta Z: " + str(
+                        frame.hands[n].palm_position.z - self.frameToCompare.hands[n].palm_position.z))
 
+            for m in range(len(frame.hands[n].fingers)):
+                print ("Finger Type: " + self.finger_names[frame.hands[n].fingers[m].type] + " Tip Direction X: " + str(
+                    frame.hands[n].fingers[m].direction.x) + " Tip Direction Y: " + str(frame.hands[n].fingers[m].direction.y) + " Tip Direction Z: " + str(
+                    frame.hands[n].fingers[m].direction.z))
+            self.createJSON(self.frameToCompare, frame)
+
+    def createJSON(self, firstFrame, lastFrame):
+        frameJson = {'valid': lastFrame.is_valid, 'frameId': lastFrame.id, 'hands': []}
+        for hand in lastFrame.hands:
+            handtype = 0 if hand.is_left else 1
+            handJson = {'valid': hand.is_valid, 'type': handtype, 'id': hand.id, 'fingers': [], 'gesture': self.gestureToReadCode}
+            handJson['direction'] = {'x': hand.direction.x, 'y': hand.direction.y, 'z': hand.direction.z}
+            handJson['deltas'] = {'x': hand.palm_position.x - firstFrame.hands[0].palm_position.x,'y': hand.palm_position.y - firstFrame.hands[0].palm_position.y,
+                                  'z': hand.palm_position.z - firstFrame.hands[0].palm_position.z}
             for finger in hand.fingers:
-                print ("Finger Type: " + self.finger_names[finger.type] + " Tip Direction X: " + str(
-                    finger.direction.x) + " Tip Direction Y: " + str(finger.direction.y) + " Tip Direction Z: " + str(
-                    finger.direction.z))
+                fingerJson = {'valid': finger.is_valid, 'bones': [], 'type': finger.type, 'id': finger.id,
+                              'direction': {'x': finger.direction.x, 'y': finger.direction.y, 'z': finger.direction.z}}
+                for index in range(4):
+                    fingerJson['bones'].append({'valid': finger.bone(index).is_valid, 'type': finger.bone(index).type,
+                                                'direction': {'x': finger.bone(index).direction.x,
+                                                              'y': finger.bone(index).direction.y,
+                                                              'z': finger.bone(index).direction.z}})
+                handJson['fingers'].append(fingerJson)
+            frameJson['hands'].append(handJson)
+        if (lastFrame.hands):
+            self.client.publish("leapLesco", json.dumps(frameJson))
 
+        print json.dumps(frameJson)
 
-            thumbFinger = hand.fingers[0]
-            indexFinger = hand.fingers[1]
-            middleFinger = hand.fingers[2]
-            ringFinger = hand.fingers[3]
-            pinkyFinger = hand.fingers[4]
-
-            if (thumbFinger.direction.x < 0 and indexFinger.direction.x < 0 and middleFinger.direction.x < 0 and ringFinger.direction.x < 0 and pinkyFinger.direction.x > 0 and
-                thumbFinger.direction.y > 0 and indexFinger.direction.y < 0 and middleFinger.direction.y < 0 and ringFinger.direction.y < 0 and pinkyFinger.direction.y > 0 and
-                thumbFinger.direction.z < 0 and pinkyFinger.direction.z < 0):
-
-                print("Y\n\n\n\n\n")
-                self.write("Y")
-
-            else:
-                self.write("NONE")
 
 
 
