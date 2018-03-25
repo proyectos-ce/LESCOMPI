@@ -2,6 +2,8 @@ import Tkinter as tk
 import Leap
 import json
 import paho.mqtt.client as mqtt
+import win32com.client as wincl
+
 
 from Tkinter import *
 
@@ -67,6 +69,8 @@ class Reader(Tk):
 
     def __init__(self):
         Tk.__init__(self)
+        speak = wincl.Dispatch("SAPI.SpVoice")
+        #speak.Speak("A")
         self.leap = Leap.Controller()
         self.title("Touch Points")
         self.geometry("800x600")
@@ -87,10 +91,13 @@ class Reader(Tk):
         self.labelSignToRead.place(x=5, y=0)
 
         self.labelSignRead = Label(self, bg="black", fg="Pink", text="Codigo de gesto leido", font=("Consolas", 32))
-        self.labelSignRead.place(x=5, y=200)
+        #self.labelSignRead.place(x=5, y=200)
 
         self.getFrameButton = Button(self, command = self.getLastFrame, text="Capturar Cuadro", bg="Pink", font=("Consolas", 32))
         self.getFrameButton.place(x=340, y=500)
+
+        self.deleteLastButton = Button(self, command=self.deleteLastFrame, text = "Borrar ultimo cuadro", bg="Pink", font=("Consolas", 32))
+        self.deleteLastButton.place(x=0,y=200)
 
         self.listener = Listener()
         self.leap.add_listener(self.listener)
@@ -108,6 +115,13 @@ class Reader(Tk):
         self.client.connect("iot.eclipse.org", 1883, 60)
 
 
+
+
+
+    def deleteLastFrame(self):
+        msgJson = {'command': 'delete_last'}
+        self.client.publish("leapLesco", json.dumps(msgJson))
+        print("ultimo borrado")
 
     def setSignToRead(self, event):
         try:
@@ -160,8 +174,9 @@ class Reader(Tk):
                 print ("Finger Type: " + self.finger_names[frame.hands[n].fingers[m].type] + " Tip Direction X: " + str(
                     frame.hands[n].fingers[m].direction.x) + " Tip Direction Y: " + str(frame.hands[n].fingers[m].direction.y) + " Tip Direction Z: " + str(
                     frame.hands[n].fingers[m].direction.z))
-            self.createJSON(self.frameToCompare, frame)
+            self.createJSON(frame, self.frameToCompare)
 
+#Last frame es el primero de los 80, first frame es el ultimo de los 80
     def createJSON(self, firstFrame, lastFrame):
         if(len(lastFrame.hands) ==1):
             frameJson = {'valid': lastFrame.is_valid, 'frameId': lastFrame.id, 'hands': []}
@@ -169,8 +184,8 @@ class Reader(Tk):
                 handtype = 0 if hand.is_left else 1
                 handJson = {'valid': hand.is_valid, 'type': handtype, 'id': hand.id, 'fingers': [], 'gesture': self.gestureToReadCode}
                 handJson['direction'] = {'x': hand.direction.x, 'y': hand.direction.y, 'z': hand.direction.z}
-                handJson['deltas'] = {'x': hand.palm_position.x - firstFrame.hands[0].palm_position.x,'y': hand.palm_position.y - firstFrame.hands[0].palm_position.y,
-                                      'z': hand.palm_position.z - firstFrame.hands[0].palm_position.z}
+                handJson['deltas'] = {'x': firstFrame.hands[0].palm_position.x - hand.palm_position.x,'y': firstFrame.hands[0].palm_position.y -hand.palm_position.y,
+                                      'z': firstFrame.hands[0].palm_position.z - hand.palm_position.z}
                 for finger in hand.fingers:
                     fingerJson = {'valid': finger.is_valid, 'bones': [], 'type': finger.type, 'id': finger.id,
                                   'direction': {'x': finger.direction.x, 'y': finger.direction.y, 'z': finger.direction.z}}
@@ -182,8 +197,9 @@ class Reader(Tk):
                     handJson['fingers'].append(fingerJson)
                 frameJson['hands'].append(handJson)
             if (lastFrame.hands):
+                msgJson={'command':'frame', 'frame':frameJson}
 
-                self.client.publish("leapLesco", json.dumps(frameJson))
+                self.client.publish("leapLesco", json.dumps(msgJson))
 
             print json.dumps(frameJson)
 
