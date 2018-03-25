@@ -163,27 +163,32 @@ class Reader(Tk):
             self.createJSON(self.frameToCompare, frame)
 
     def createJSON(self, firstFrame, lastFrame):
-        frameJson = {'valid': lastFrame.is_valid, 'frameId': lastFrame.id, 'hands': []}
-        for hand in lastFrame.hands:
-            handtype = 0 if hand.is_left else 1
-            handJson = {'valid': hand.is_valid, 'type': handtype, 'id': hand.id, 'fingers': [], 'gesture': self.gestureToReadCode}
-            handJson['direction'] = {'x': hand.direction.x, 'y': hand.direction.y, 'z': hand.direction.z}
-            handJson['deltas'] = {'x': hand.palm_position.x - firstFrame.hands[0].palm_position.x,'y': hand.palm_position.y - firstFrame.hands[0].palm_position.y,
-                                  'z': hand.palm_position.z - firstFrame.hands[0].palm_position.z}
-            for finger in hand.fingers:
-                fingerJson = {'valid': finger.is_valid, 'bones': [], 'type': finger.type, 'id': finger.id,
-                              'direction': {'x': finger.direction.x, 'y': finger.direction.y, 'z': finger.direction.z}}
-                for index in range(4):
-                    fingerJson['bones'].append({'valid': finger.bone(index).is_valid, 'type': finger.bone(index).type,
-                                                'direction': {'x': finger.bone(index).direction.x,
-                                                              'y': finger.bone(index).direction.y,
-                                                              'z': finger.bone(index).direction.z}})
-                handJson['fingers'].append(fingerJson)
-            frameJson['hands'].append(handJson)
-        if (lastFrame.hands):
-            self.client.publish("leapLesco", json.dumps(frameJson))
+        if(len(lastFrame.hands) ==1):
+            frameJson = {'valid': lastFrame.is_valid, 'frameId': lastFrame.id, 'hands': []}
+            for hand in lastFrame.hands:
+                handtype = 0 if hand.is_left else 1
+                handJson = {'valid': hand.is_valid, 'type': handtype, 'id': hand.id, 'fingers': [], 'gesture': self.gestureToReadCode}
+                handJson['direction'] = {'x': hand.direction.x, 'y': hand.direction.y, 'z': hand.direction.z}
+                handJson['deltas'] = {'x': hand.palm_position.x - firstFrame.hands[0].palm_position.x,'y': hand.palm_position.y - firstFrame.hands[0].palm_position.y,
+                                      'z': hand.palm_position.z - firstFrame.hands[0].palm_position.z}
+                for finger in hand.fingers:
+                    fingerJson = {'valid': finger.is_valid, 'bones': [], 'type': finger.type, 'id': finger.id,
+                                  'direction': {'x': finger.direction.x, 'y': finger.direction.y, 'z': finger.direction.z}}
+                    for index in range(4):
+                        fingerJson['bones'].append({'valid': finger.bone(index).is_valid, 'type': finger.bone(index).type,
+                                                    'direction': {'x': finger.bone(index).direction.x,
+                                                                  'y': finger.bone(index).direction.y,
+                                                                  'z': finger.bone(index).direction.z}})
+                    handJson['fingers'].append(fingerJson)
+                frameJson['hands'].append(handJson)
+            if (lastFrame.hands):
 
-        print json.dumps(frameJson)
+                self.client.publish("leapLesco", json.dumps(frameJson))
+
+            print json.dumps(frameJson)
+
+        else:
+            print("MANO FANTASMAAA")
 
 
 
