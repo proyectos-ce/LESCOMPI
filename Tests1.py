@@ -135,10 +135,10 @@ class Reader(Tk):
         self.lastFrameProcessed = self.listener.lastFrame
         self.lastFiveFramesProcessed = self.listener.lastFrames
         self.listener.getFrames = True
-
+        print("inicia muestra")
         while(len(self.listener.listOfEightyFrames) != 80):
-            print(len(self.listener.listOfEightyFrames))
-
+            pass
+        print("finaliza muestra")
         self.getFrameInfo(self.listener.listOfEightyFrames[-1], self.listener.listOfEightyFrames)
 
         self.listener.listOfEightyFrames = []
@@ -170,10 +170,10 @@ class Reader(Tk):
                    " \nDelta Z: " + str(
                         frame.hands[n].palm_position.z - self.frameToCompare.hands[n].palm_position.z))
 
-            for m in range(len(frame.hands[n].fingers)):
+            """for m in range(len(frame.hands[n].fingers)):
                 print ("Finger Type: " + self.finger_names[frame.hands[n].fingers[m].type] + " Tip Direction X: " + str(
                     frame.hands[n].fingers[m].direction.x) + " Tip Direction Y: " + str(frame.hands[n].fingers[m].direction.y) + " Tip Direction Z: " + str(
-                    frame.hands[n].fingers[m].direction.z))
+                    frame.hands[n].fingers[m].direction.z))"""
             self.createJSON(frame, self.frameToCompare)
 
 #Last frame es el primero de los 80, first frame es el ultimo de los 80
