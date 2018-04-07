@@ -165,6 +165,7 @@ class Reader(Tk):
                         frame.hands[n].fingers[m].direction.x) + " Tip Direction Y: " + str(frame.hands[n].fingers[m].direction.y) + " Tip Direction Z: " + str(
                         frame.hands[n].fingers[m].direction.z))"""
                 self.createJSON(frame, self.frameToCompare)
+
         else:#En caso de que no haya manos, se indica un espacio al interprete
             msgJson = {'command': 'space'}
             self.client.publish("leapLesco", json.dumps(msgJson))
