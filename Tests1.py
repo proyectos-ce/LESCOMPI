@@ -91,7 +91,7 @@ class Reader(Tk):
 
         self.listener = Listener()
         self.leap.add_listener(self.listener)
-        self.listener.set_textBox(self.infoReadTextBox)
+
 
         self.lastFrameProcessed = Leap.Frame
         self.frameToCompare = Leap.Frame
@@ -113,14 +113,13 @@ class Reader(Tk):
 
     def deleteLastFrame(self):
         msgJson = {'command': 'delete_last'}
-        self.client.publish("leapLesco", json.dumps(msgJson))
+        self.client.publish("leapLescoTraining", json.dumps(msgJson))
         print("ultimo borrado")
 
     def setSignToRead(self, event):
         try:
             self.gestureToReadCode = int(self.entrySign.get())
             self.getLastFrame()
-            print("Gesto a leer: "+self.entrySign.get())
         except Exception as ValueError:
             print(self.entrySign.get(), '\n', 'Error de Entrada')
 
@@ -138,37 +137,38 @@ class Reader(Tk):
         self.listener.listOfEightyFrames = []
         self.listener.getFrames = False
 
-        print("Last Frame Updated")
-
     #Funcion encargada de obtener los datos de las manos que se observan en el cuadro final e inicial para posteriormente
     #enviar el JSON a la biblioteca Keras
     def getFrameInfo(self, frame, lastEightyFrames):
         self.handType = ""
 
         self.frameToCompare = lastEightyFrames[0]
+        if(len(frame.hands) != 0):
+            for n in range(len(frame.hands)):
+                if frame.hands[n].is_right: self.handType = "Right"
+                else: self.handType = "Left"
 
-        for n in range(len(frame.hands)):
-            if frame.hands[n].is_right: self.handType = "Right"
-            else: self.handType = "Left"
+                print(str(self.handType))
 
-            print(str(self.handType))
+                print ("Hand Movement: \n" + " Position X LastFrame: "+ str(frame.hands[n].palm_position.x)+
+                       " Position X FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.x)+ " \nDelta X: " +
+                       str(frame.hands[n].palm_position.x - self.frameToCompare.hands[n].palm_position.x) +
+                       " \nPosition Y LastFrame: " + str(frame.hands[n].palm_position.y) + " Position Y FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.y)+
+                       " \nDelta Y: " + str(
+                            frame.hands[n].palm_position.y - self.frameToCompare.hands[n].palm_position.y) +
+                       " \nPosition Z LastFrame: " + str(frame.hands[n].palm_position.z) + " Position Z FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.z)+
+                       " \nDelta Z: " + str(
+                            frame.hands[n].palm_position.z - self.frameToCompare.hands[n].palm_position.z))
 
-            print ("Hand Movement: \n" + " Position X LastFrame: "+ str(frame.hands[n].palm_position.x)+
-                   " Position X FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.x)+ " \nDelta X: " +
-                   str(frame.hands[n].palm_position.x - self.frameToCompare.hands[n].palm_position.x) +
-                   " \nPosition Y LastFrame: " + str(frame.hands[n].palm_position.y) + " Position Y FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.y)+
-                   " \nDelta Y: " + str(
-                        frame.hands[n].palm_position.y - self.frameToCompare.hands[n].palm_position.y) +
-                   " \nPosition Z LastFrame: " + str(frame.hands[n].palm_position.z) + " Position Z FirstFrame: "+ str(self.frameToCompare.hands[n].palm_position.z)+
-                   " \nDelta Z: " + str(
-                        frame.hands[n].palm_position.z - self.frameToCompare.hands[n].palm_position.z))
-
-            """for m in range(len(frame.hands[n].fingers)):
-                print ("Finger Type: " + self.finger_names[frame.hands[n].fingers[m].type] + " Tip Direction X: " + str(
-                    frame.hands[n].fingers[m].direction.x) + " Tip Direction Y: " + str(frame.hands[n].fingers[m].direction.y) + " Tip Direction Z: " + str(
-                    frame.hands[n].fingers[m].direction.z))"""
-            self.createJSON(frame, self.frameToCompare)
-
+                """for m in range(len(frame.hands[n].fingers)):
+                    print ("Finger Type: " + self.finger_names[frame.hands[n].fingers[m].type] + " Tip Direction X: " + str(
+                        frame.hands[n].fingers[m].direction.x) + " Tip Direction Y: " + str(frame.hands[n].fingers[m].direction.y) + " Tip Direction Z: " + str(
+                        frame.hands[n].fingers[m].direction.z))"""
+                self.createJSON(frame, self.frameToCompare)
+        else:#En caso de que no haya manos, se indica un espacio al interprete
+            msgJson = {'command': 'space'}
+            self.client.publish("leapLesco", json.dumps(msgJson))
+            print("ESPACIO")
 #Last frame es el primero de los 80, first frame es el ultimo de los 80
     #Funcion encargada de crear y enviar el JSON por mqtt, solo se envian datos de la mano derecha
     def createJSON(self, firstFrame, lastFrame):
@@ -177,7 +177,7 @@ class Reader(Tk):
             for hand in lastFrame.hands:
                 handtype = 0 if hand.is_left else 1
 
-                if(handtype == 0):#Solo se envian datos de la mano derecha
+                if(handtype == 1):#Solo se envian datos de la mano derecha
                     handJson = {'valid': hand.is_valid, 'type': handtype, 'id': hand.id, 'fingers': [], 'gesture': self.gestureToReadCode}
                     handJson['direction'] = {'x': hand.direction.x, 'y': hand.direction.y, 'z': hand.direction.z}
                     handJson['deltas'] = {'x': firstFrame.hands[0].palm_position.x - hand.palm_position.x,'y': firstFrame.hands[0].palm_position.y -hand.palm_position.y,
@@ -195,19 +195,17 @@ class Reader(Tk):
             if (lastFrame.hands):
                 msgJson={'command':'frame', 'frame':frameJson}
 
-                self.client.publish("leapLesco", json.dumps(msgJson))
+                self.client.publish("leapLescoTraining", json.dumps(msgJson))
 
             print json.dumps(frameJson)
 
         #elif len(lastFrame.hands) > 1:
          #   print("MANO FANTASMAAA")
 
-        else:#En caso de que no haya manos, se indica un espacio al interprete
-            msgJson = {'command': 'space'}
-            self.client.publish("leapLesco", json.dumps(msgJson))
-            print("ESPACIO")
+
 
     def write(self, string):
+
         self.infoReadTextBox.config(state=NORMAL)
         self.infoReadTextBox.delete(1.0, END)
         self.infoReadTextBox.insert(END, string)
