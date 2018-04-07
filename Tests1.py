@@ -103,6 +103,18 @@ class Reader(Tk):
 
         self.client = mqtt.Client("leapLesco")
         self.client.connect("iot.eclipse.org", 1883, 60)
+        client.on_connect = self.on_connect_mqtt
+        client.on_message = self.on_message_mqtt
+
+    def on_connect_mqtt(self, client, userdata, flags, rc):
+        client.subscribe("leapBoton")
+
+    def on_message_mqtt(self,client, userdata, msg):
+        m_in=json.loads(msg.payload)
+        if(m_in['command']=='start reading'):
+            print('boton presionado')
+            self.gestureToReadCode = int(self.entrySign.get())
+            self.getLastFrame()
 
 
     #Funcion que indica al Interprete que debe analizar los gestos enviados
@@ -218,9 +230,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
