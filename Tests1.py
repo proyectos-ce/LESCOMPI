@@ -8,6 +8,13 @@ import json
 #Bilbioteca para comunicacion por red
 import paho.mqtt.client as mqtt
 
+import os
+
+def cargarImagen(nombre):
+    ruta = os.path.join('Imagen',nombre)
+    imagen = PhotoImage(file=ruta)
+    return imagen
+
 
 #Clase del Leap Motion que incluye todos sus metodos
 
@@ -62,35 +69,19 @@ class Reader(Tk):
         #Metodos de interfaz de Tkinter
         self.title("Interfaz de entrenamiento")
         self.geometry("800x600")
-        self.mainFrame = Frame(self, width=800, height=600, bg="black")
+        self.mainFrame = Frame(self, width=800, height=600, bg="#0b486b")
         self.mainFrame.place(x=0,y=0)
 
-        self.infoReadTextBox = Text(self, width = 4, height=1, font=("Consolas", 72))
-        self.infoReadTextBox.place(x=10, y=300)
-        self.infoReadTextBox.insert(END, "HOLA")
-        self.infoReadTextBox.config(state=DISABLED)
+        self.logo = cargarImagen('Lescompi.gif')
+        self.logoLabel = Label(self, image=self.logo)
+        self.logoLabel.place(x=200, y=400)
 
-        self.entrySign = Entry(self, font=("Consolas", 32))
-        self.entrySign.place(x=5, y=100)
-        self.entrySign.bind("<Return>", self.setSignToRead)
-
-        self.labelSignToRead = Label(self, bg="black", fg="Pink", text="Digite el codigo de gesto", font=("Consolas", 32))
-        self.labelSignToRead.place(x=5, y=0)
-
-        self.labelSignRead = Label(self, bg="black", fg="Pink", text="Codigo de gesto leido", font=("Consolas", 32))
-        #self.labelSignRead.place(x=5, y=200)
-
-        self.getFrameButton = Button(self, command = self.getLastFrame, text="Capturar Cuadro", bg="Pink", font=("Consolas", 32))
-        self.getFrameButton.place(x=340, y=500)
-
-        self.analyzeButton = Button(self, command = self.analyze, text = "Analisis", bg="Pink", font=("Consolas", 32))
-        self.analyzeButton.place(x=500, y=350)
-
-        self.deleteLastButton = Button(self, command=self.deleteLastFrame, text = "Borrar ultimo cuadro", bg="Pink", font=("Consolas", 32))
-        self.deleteLastButton.place(x=0,y=200)
 
         self.listener = Listener()
         self.leap.add_listener(self.listener)
+
+        self.labelSignToRead = Label(self, bg="#0b486b", fg="#a8dba8", text="Por favor presione\n el boton para\n realizar sus gestos", font=("Consolas", 50))
+        self.labelSignToRead.place(x=20, y=0)
 
 
         self.lastFrameProcessed = Leap.Frame
@@ -98,22 +89,23 @@ class Reader(Tk):
 
         self.gestureToReadCode = 0
 
-
         self.finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
 
         self.client = mqtt.Client("leapLesco")
         self.client.connect("iot.eclipse.org", 1883, 60)
-        client.on_connect = self.on_connect_mqtt
-        client.on_message = self.on_message_mqtt
+        self.client.on_connect = self.on_connect_mqtt
+        self.client.on_message = self.on_message_mqtt
+        self.client.loop_start()
 
     def on_connect_mqtt(self, client, userdata, flags, rc):
-        client.subscribe("leapBoton")
+        client.subscribe("LeapBoton")
 
     def on_message_mqtt(self,client, userdata, msg):
+        print(msg.payload)
         m_in=json.loads(msg.payload)
+
         if(m_in['command']=='start reading'):
-            print('boton presionado')
-            self.gestureToReadCode = int(self.entrySign.get())
+           # self.gestureToReadCode = int(self.entrySign.get())
             self.getLastFrame()
 
 
@@ -208,21 +200,11 @@ class Reader(Tk):
             if (lastFrame.hands):
                 msgJson={'command':'frame', 'frame':frameJson}
 
-                self.client.publish("leapLescoTraining", json.dumps(msgJson))
+                self.client.publish("leapLesco", json.dumps(msgJson))
 
             print json.dumps(frameJson)
 
-        #elif len(lastFrame.hands) > 1:
-         #   print("MANO FANTASMAAA")
 
-
-
-    def write(self, string):
-
-        self.infoReadTextBox.config(state=NORMAL)
-        self.infoReadTextBox.delete(1.0, END)
-        self.infoReadTextBox.insert(END, string)
-        self.infoReadTextBox.config(state=DISABLED)
 
 def main():
     Reader().mainloop()
